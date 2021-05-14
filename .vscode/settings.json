@@ -1,0 +1,8 @@
+{
+    "python.formatting.provider": "black",
+    "yaml.customTags": [
+        "!Ref",
+        "!GetAtt",
+        "!Sub"
+    ]
+}

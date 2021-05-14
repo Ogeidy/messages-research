@@ -1,0 +1,53 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Messages Project
+
+  SAM Template for messages-research
+
+Globals:
+  Function:
+    Timeout: 3
+    Runtime: python3.8
+
+Resources:
+  GetIp:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/get_ip
+      Handler: app.lambda_handler
+      Events:
+        GetIpEvent:
+          Type: Api
+          Properties:
+            Path: /get-ip
+            Method: get
+
+  RequestLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: request-layer
+      Description: Request layer
+      ContentUri: ./layers/requests/
+      CompatibleRuntimes:
+        - python3.8
+      RetentionPolicy: Retain
+    Metadata:
+      BuildMethod: python3.8
+
+  # SendMessage:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     CodeUri: functions/send_message
+  #     Handler: app.lambda_handler
+  #     Events:
+  #       SendMessageEvent:
+  #         Type: Api
+  #         Properties:
+  #           Path: /send-message
+  #           Method: post
+
+Outputs:
+  MessgeseApi:
+    Description: "API Gateway endpoint URL for Prod stage for Messages project"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
