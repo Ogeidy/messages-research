@@ -16,6 +16,8 @@ Resources:
     Properties:
       CodeUri: functions/get_ip
       Handler: app.lambda_handler
+      Layers:
+        - !Ref RequestLayer
       Events:
         GetIpEvent:
           Type: Api
