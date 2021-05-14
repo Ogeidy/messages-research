@@ -1,0 +1,33 @@
+name: Deploy on AWS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show env
+        run: |
+          aws --version
+          python --version
+          sam --version
+     
+      - uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        id: creds
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{secrets.AWS_SECRET_ACCESS_KEY_ID}
+          aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+          aws-region: ${{secrets.AWS_REGION}}
+          
+      - name: SAM Validate
+        run: |
+          sam validate -t ./template.yaml
+               
+      - name: SAM Build & Deploy
+        run: |
+          sam build -t ./template.yaml
+          sam deploy -t ./template.yaml --resolve-s3 --stack-name messages --capabilities CAPABILITY_IAM
