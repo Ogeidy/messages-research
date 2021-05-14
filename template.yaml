@@ -28,8 +28,8 @@ Resources:
   RequestLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
-      LayerName: request-layer
-      Description: Request layer
+      LayerName: requests-layer
+      Description: Requests layer
       ContentUri: ./layers/requests/
       CompatibleRuntimes:
         - python3.8
