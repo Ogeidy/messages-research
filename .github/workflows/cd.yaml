@@ -30,6 +30,8 @@ jobs:
       - name: SAM Build
         run: |
           sam build -t ./template.yaml
+          ls .aws-sam/build
+          ls .aws-sam/build/RequestsLayer
 
       - name: SAM Deploy
         run: |
