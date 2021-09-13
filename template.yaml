@@ -3,19 +3,141 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   Messages Project
 
-  SAM Template for messages-research
-
 Globals:
   Function:
     Timeout: 3
+    Handler: app.lambda_handler
     Runtime: python3.8
 
+Parameters:
+  CognitoDomain:
+    Type: String
+    MinLength: 3
+    MaxLength: 63
+    AllowedPattern: ^[a-z0-9](?:[a-z0-9\-]{0,61}[a-z0-9])?$
+    Description: Enter a string. Must be alpha numeric 3-63 in length.
+
 Resources:
+  MessagesApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: api
+
+  MessagesUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub ${CognitoDomain}-user-pool
+      UsernameAttributes:
+        - email
+      UsernameConfiguration:
+        CaseSensitive: false
+      AutoVerifiedAttributes:
+        - email
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Mutable: false
+          Required: true
+        - Name: name
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+
+  MessagesUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Sub ${CognitoDomain}-user-pool-client
+      UserPoolId: !Ref MessagesUserPool
+      AllowedOAuthFlowsUserPoolClient: true
+      CallbackURLs:
+        - http://localhost:3000
+      AllowedOAuthFlows:
+        - code
+        - implicit
+      AllowedOAuthScopes:
+        - phone
+        - email
+        - openid
+        - profile
+      SupportedIdentityProviders:
+        - COGNITO
+
+  MessagesUserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Ref CognitoDomain
+      UserPoolId: !Ref MessagesUserPool
+
+  MessagesTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: id
+        Type: String
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+  MessagesQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt MessagesDeadLetterQueue.Arn
+        maxReceiveCount: 5
+
+  MessagesDeadLetterQueue:
+    Type: AWS::SQS::Queue
+
+  SendMessage:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/send_message
+      Environment:
+        Variables:
+          MESSAGES_TABLE_NAME: !Ref MessagesTable
+      Events:
+        SendMessageEvent:
+          Type: Api
+          Properties:
+            Path: /send-message
+            Method: POST
+            RestApiId: !Ref MessagesApi
+
+  ReadFromDb:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/read_from_db
+      Environment:
+        Variables:
+          MESSAGES_TABLE_NAME: !Ref MessagesTable
+          MESSAGES_QUEUE_NAME: !GetAtt MessagesQueue.QueueName
+      Events:
+        ReadFromDbEvent:
+          Type: Api
+          Properties:
+            Path: /read-from-db
+            Method: POST
+            RestApiId: !Ref MessagesApi
+
+  ReadFromSqs:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/read_from_sqs
+      Environment:
+        Variables:
+          MESSAGES_QUEUE_NAME: !GetAtt MessagesQueue.QueueName
+      Events:
+        ReadFromSqsEvent:
+          Type: Api
+          Properties:
+            Path: /read-from-sqs
+            Method: POST
+            RestApiId: !Ref MessagesApi
+
   GetIp:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: functions/get_ip
-      Handler: app.lambda_handler
       Layers:
         - !Ref RequestsLayer
       Events:
@@ -23,7 +145,8 @@ Resources:
           Type: Api
           Properties:
             Path: /get-ip
-            Method: get
+            Method: GET
+            RestApiId: !Ref MessagesApi
 
   RequestsLayer:
     Type: AWS::Serverless::LayerVersion
@@ -37,19 +160,13 @@ Resources:
     Metadata:
       BuildMethod: python3.8
 
-  # SendMessage:
-  #   Type: AWS::Serverless::Function
-  #   Properties:
-  #     CodeUri: functions/send_message
-  #     Handler: app.lambda_handler
-  #     Events:
-  #       SendMessageEvent:
-  #         Type: Api
-  #         Properties:
-  #           Path: /send-message
-  #           Method: post
-
 Outputs:
-  MessgeseApi:
-    Description: "API Gateway endpoint URL for Prod stage for Messages project"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+  CognitoUserPoolID:
+    Value: !Ref MessagesUserPool
+    Description: The UserPool ID
+  CognitoAppClientID:
+    Value: !Ref MessagesUserPoolClient
+    Description: The app client
+  CognitoUserPoolDomain:
+    Value: !Ref MessagesUserPoolDomain
+    Description: The UserPool domain
