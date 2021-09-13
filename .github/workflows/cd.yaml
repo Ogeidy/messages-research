@@ -28,11 +28,17 @@ jobs:
           sam validate -t ./template.yaml
 
       - name: SAM Build
-        run: |
-          sam build -t ./template.yaml
-          ls .aws-sam/build
-          ls .aws-sam/build/RequestsLayer
+        run: >
+          sam build
+          -t ./template.yaml
+          --parameter-overrides "ParameterKey=CognitoDomain,ParameterValue=messages-auth"
 
       - name: SAM Deploy
-        run: |
-          sam deploy -t .aws-sam/build/template.yaml --resolve-s3 --stack-name messages --capabilities CAPABILITY_IAM
+        run: >
+          sam deploy 
+          -t .aws-sam/build/template.yaml
+          --no-fail-on-empty-changeset
+          --resolve-s3
+          --stack-name messages
+          --capabilities CAPABILITY_IAM
+          --parameter-overrides "ParameterKey=CognitoDomain,ParameterValue=messages-auth"
