@@ -102,6 +102,86 @@ Resources:
               AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${MessagesCloudFrontOriginIdentity}"
             Resource: !Sub "arn:aws:s3:::${BucketName}/*"
 
+  # --- AWS CloudFront ---
+
+  MessagesDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: Messages cloudfront distribution
+        Enabled: "true"
+        PriceClass: PriceClass_100
+        DefaultRootObject: index.html
+        Origins:
+          - Id: messages-frontend
+            DomainName: !GetAtt MessagesS3Bucket.DomainName
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${MessagesCloudFrontOriginIdentity}"
+          - Id: messages-backend
+            DomainName: !Sub "${MessagesApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}"
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols: ["TLSv1.2"]
+        DefaultCacheBehavior:
+          TargetOriginId: messages-frontend
+          AllowedMethods:
+            - GET
+            - HEAD
+          ForwardedValues:
+            QueryString: "false"
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: redirect-to-https
+        CacheBehaviors:
+          - TargetOriginId: messages-backend
+            AllowedMethods:
+              - HEAD
+              - DELETE
+              - POST
+              - GET
+              - OPTIONS
+              - PUT
+              - PATCH
+            ViewerProtocolPolicy: redirect-to-https
+            PathPattern: "/api/*"
+            CachePolicyId: !Ref MessagesApiCachePolicy
+            OriginRequestPolicyId: !Ref MessagesApiOriginRequestPolicy
+        
+
+  MessagesApiCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Name: !Sub "${AWS::StackName}-api-cache-policy"
+        Comment: "Cache policy for api requests"
+        DefaultTTL: 0
+        MaxTTL: 1
+        MinTTL: 0
+        ParametersInCacheKeyAndForwardedToOrigin:
+          CookiesConfig:
+            CookieBehavior: none
+          EnableAcceptEncodingGzip: false
+          EnableAcceptEncodingBrotli: false
+          HeadersConfig:
+            HeaderBehavior: whitelist
+            Headers:
+              - Authorization
+          QueryStringsConfig:
+            QueryStringBehavior: all
+
+  MessagesApiOriginRequestPolicy:
+    Type: AWS::CloudFront::OriginRequestPolicy
+    Properties:
+      OriginRequestPolicyConfig:
+        Name: !Sub "${AWS::StackName}-api-origin-request-policy"
+        Comment: "Origin Request policy for filtering data forwarded to api requests"
+        CookiesConfig:
+          CookieBehavior: all
+        HeadersConfig:
+          HeaderBehavior: none
+        QueryStringsConfig:
+          QueryStringBehavior: all
+
   # --- AWS DynamoDB ---
 
   MessagesTable:
@@ -203,6 +283,12 @@ Resources:
       BuildMethod: python3.8
 
 Outputs:
+  MessagesDistributionId:
+    Description: "Messages CloudFront distribuition id"
+    Value: !Ref MessagesDistribution
+  MessagesDistributionDomainName:
+    Description: "Messages CloudFront distribuition domain name"
+    Value: !GetAtt  MessagesDistribution.DomainName
   CognitoUserPoolID:
     Value: !Ref MessagesUserPool
     Description: The UserPool ID
