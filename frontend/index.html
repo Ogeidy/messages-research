@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>My Test Messages</title>
+</head>
+
+<body>
+    <header>
+        <button onclick="log_in()">Login</button>
+        <button onclick="log_out()">Logout</button>
+        <span id="username"></span>
+        <span id="email"></span>
+    </header>
+    <main>
+        <div class="send_message">
+            <h2>Type and send some message</h2>
+            <form id="send_form">
+                <label for="message"></label>
+                <input type="text" name="message" id="message">
+                <input type="submit" value="Send">
+            </form>
+        </div>
+        <button onclick="read_from_db()">Read data from db and write it to queue</button><span id="items_readed"></span>
+        <br>
+        <button onclick="read_from_sqs()">Read data from sqs and write it to UI</button>
+        <br>
+        <button onclick="clear_ui()">Clear UI</button>
+        <div>
+            <ul id="messages_list"></ul>
+        </div>
+
+        <div class="cognito-example" style="display: none;">
+            <h2>Cognito User</h2>
+            <p style="white-space:pre-line;" id="token_status"></p>
+            <p>Id Token</p>
+            <p style="white-space:pre-line;" id="id_token"></p>
+            <p>Access Token</p>
+            <p style="white-space:pre-line;" id="access_token"></p>
+            <p>User Profile</p>
+            <p style="white-space:pre-line;" id="userInfo"></p>
+        </div>
+    </main>
+
+    <script language="JavaScript" type="text/javascript"
+        src="https://kjur.github.io/jsrsasign/jsrsasign-latest-all-min.js"></script>
+
+    <script src="js/utils.js"></script>
+    <script src="js/verifier.js"></script>
+    <script src="js/userprofile.js"></script>
+    <script src="js/messages.js"></script>
+</body>
+
+</html>
