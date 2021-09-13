@@ -42,3 +42,8 @@ jobs:
           --stack-name messages
           --capabilities CAPABILITY_IAM
           --parameter-overrides "ParameterKey=CognitoDomain,ParameterValue=messages-auth"
+      
+      - name: Upload frontend
+        run: |
+          aws s3 sync --cache-control 'max-age=604800' frontend s3://messages-frontend-bucket/
+          # aws cloudfront create-invalidation --distribution-id  E38P0EMO5MP9H9 --paths "/*"
