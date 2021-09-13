@@ -16,12 +16,20 @@ Parameters:
     MaxLength: 63
     AllowedPattern: ^[a-z0-9](?:[a-z0-9\-]{0,61}[a-z0-9])?$
     Description: Enter a string. Must be alpha numeric 3-63 in length.
+    Default: messages-auth
+  BucketName:
+    Type: String
+    Default: messages-frontend-bucket
 
 Resources:
+  # --- AWS API Gateway ---
+
   MessagesApi:
     Type: AWS::Serverless::Api
     Properties:
       StageName: api
+
+  # --- AWS Cognito ---
 
   MessagesUserPool:
     Type: AWS::Cognito::UserPool
@@ -68,6 +76,34 @@ Resources:
       Domain: !Ref CognitoDomain
       UserPoolId: !Ref MessagesUserPool
 
+  # --- AWS S3 ---
+
+  MessagesS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: Private
+      BucketName: !Ref BucketName
+
+  MessagesCloudFrontOriginIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: "cloudfront origin identity for bucket"
+
+  MessagesS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref BucketName
+      PolicyDocument:
+        Statement:
+          - Action: ["s3:GetObject"]
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${MessagesCloudFrontOriginIdentity}"
+            Resource: !Sub "arn:aws:s3:::${BucketName}/*"
+
+  # --- AWS DynamoDB ---
+
   MessagesTable:
     Type: AWS::Serverless::SimpleTable
     Properties:
@@ -78,6 +114,8 @@ Resources:
         ReadCapacityUnits: 1
         WriteCapacityUnits: 1
 
+  # --- AWS SQS ---
+
   MessagesQueue:
     Type: AWS::SQS::Queue
     Properties:
@@ -87,6 +125,8 @@ Resources:
 
   MessagesDeadLetterQueue:
     Type: AWS::SQS::Queue
+
+  # --- AWS Lambda ---
 
   SendMessage:
     Type: AWS::Serverless::Function
@@ -116,7 +156,7 @@ Resources:
           Type: Api
           Properties:
             Path: /read-from-db
-            Method: POST
+            Method: GET
             RestApiId: !Ref MessagesApi
 
   ReadFromSqs:
@@ -131,7 +171,7 @@ Resources:
           Type: Api
           Properties:
             Path: /read-from-sqs
-            Method: POST
+            Method: GET
             RestApiId: !Ref MessagesApi
 
   GetIp:
@@ -147,6 +187,8 @@ Resources:
             Path: /get-ip
             Method: GET
             RestApiId: !Ref MessagesApi
+
+  # --- AWS Lambda Layer ---
 
   RequestsLayer:
     Type: AWS::Serverless::LayerVersion
