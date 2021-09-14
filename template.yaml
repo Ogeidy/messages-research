@@ -215,6 +215,13 @@ Resources:
       Environment:
         Variables:
           MESSAGES_TABLE_NAME: !Ref MessagesTable
+      Policies:
+        - Statement:
+            - Sid: PutMessagesTablePolicy
+              Effect: Allow
+              Action:
+                - dynamodb:PutItem
+              Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MessagesTable}"
       Events:
         SendMessageEvent:
           Type: Api
@@ -231,6 +238,19 @@ Resources:
         Variables:
           MESSAGES_TABLE_NAME: !Ref MessagesTable
           MESSAGES_QUEUE_NAME: !GetAtt MessagesQueue.QueueName
+      Policies:
+        - Statement:
+            - Sid: ScanMessagesTablePolicy
+              Effect: Allow
+              Action:
+                - dynamodb:Scan
+              Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MessagesTable}"
+            - Sid: SendSQSPolicy
+              Effect: Allow
+              Action:
+                - sqs:SendMessage
+                - sqs:GetQueueUrl
+              Resource: !Sub "arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${MessagesQueue.QueueName}"
       Events:
         ReadFromDbEvent:
           Type: Api
@@ -246,6 +266,15 @@ Resources:
       Environment:
         Variables:
           MESSAGES_QUEUE_NAME: !GetAtt MessagesQueue.QueueName
+      Policies:
+        - Statement:
+            - Sid: ReceiveDeleteSQSPolicy
+              Effect: Allow
+              Action:
+                - sqs:ReceiveMessage
+                - sqs:DeleteMessage
+                - sqs:GetQueueUrl
+              Resource: !Sub "arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${MessagesQueue.QueueName}"
       Events:
         ReadFromSqsEvent:
           Type: Api
