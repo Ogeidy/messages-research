@@ -58,7 +58,7 @@ Resources:
       UserPoolId: !Ref MessagesUserPool
       AllowedOAuthFlowsUserPoolClient: true
       CallbackURLs:
-        - http://localhost:3000
+        - https://d21j5of51ybpn6.cloudfront.net
       AllowedOAuthFlows:
         - code
         - implicit
