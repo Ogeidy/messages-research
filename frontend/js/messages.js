@@ -7,9 +7,9 @@ function send_message(event) {
     console.log(obj);
 
     let xhr = new XMLHttpRequest();
-    xhr.open("POST", "https://e5uuaxgb1e.execute-api.us-east-2.amazonaws.com/send_message_function");
+    xhr.open("POST", "api/send-message");
     xhr.setRequestHeader("Content-Type", "application/json");
-    xhr.setRequestHeader("Authorization", access_token);
+    // xhr.setRequestHeader("Authorization", access_token);
 
     xhr.onload = function () {
         console.log('Answer: ' + this.responseText);
@@ -23,9 +23,9 @@ document.getElementById('send_form').addEventListener('submit', send_message);
 function read_from_db() {
     let access_token = sessionStorage.getItem("access_token");
     let xhr = new XMLHttpRequest();
-    xhr.open("GET", "https://e5uuaxgb1e.execute-api.us-east-2.amazonaws.com/read_from_db_function");
+    xhr.open("GET", "api/read-from-db");
     xhr.setRequestHeader("Content-Type", "application/json");
-    xhr.setRequestHeader("Authorization", access_token);
+    // xhr.setRequestHeader("Authorization", access_token);
 
     xhr.onload = function () {
         console.log('Answer: ' + this.responseText);
@@ -39,9 +39,9 @@ function read_from_db() {
 function read_from_sqs() {
     let access_token = sessionStorage.getItem("access_token")
     let xhr = new XMLHttpRequest();
-    xhr.open("GET", "https://e5uuaxgb1e.execute-api.us-east-2.amazonaws.com/read_from_sqs_function");
+    xhr.open("GET", "api/read-from-sqs");
     xhr.setRequestHeader("Content-Type", "application/json");
-    xhr.setRequestHeader("Authorization", access_token);
+    // xhr.setRequestHeader("Authorization", access_token);
 
     xhr.onload = function () {
         let messages_list = document.getElementById("messages_list");
