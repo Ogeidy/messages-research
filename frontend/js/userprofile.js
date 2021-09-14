@@ -2,12 +2,11 @@ let myHeaders = new Headers();
 myHeaders.set('Cache-Control', 'no-store');
 let urlParams = new URLSearchParams(window.location.search);
 let tokens;
-let domain = "mytestmessage";
+let domain = "messages-auth";
 let region = "us-east-2";
-let appClientId = "1i4n50pi7knh0j36v2sjocfgpa";
-let userPoolId = "us-east-2_2R9H7mnVO";
-let redirectURI = "https://d2zsoxlimbqmy5.cloudfront.net";
-// let redirectURI = "http://localhost:5500";
+let appClientId = "78kvio8dpsnj6mblm820tpifld";
+let userPoolId = "us-east-2_Wv1JdHExs";
+let redirectURI = "https://d21j5of51ybpn6.cloudfront.net";
 
 
 async function log_in() {
@@ -25,7 +24,7 @@ async function log_in() {
     sessionStorage.setItem("code_challenge", code_challenge)
 
     // Redirtect user-agent to /authorize endpoint
-    location.href = "https://" + domain + ".auth." + region + ".amazoncognito.com/oauth2/authorize?response_type=code&state=" + state + "&client_id=" + appClientId + "&redirect_uri=" + redirectURI + "&scope=openid+https%3A%2F%2Fe5uuaxgb1e.execute-api.us-east-2.amazonaws.com%2F%2Fmessages.read+https%3A%2F%2Fe5uuaxgb1e.execute-api.us-east-2.amazonaws.com%2F%2Fmessages.send&code_challenge_method=S256&code_challenge=" + code_challenge;
+    location.href = "https://" + domain + ".auth." + region + ".amazoncognito.com/oauth2/authorize?response_type=code&state=" + state + "&client_id=" + appClientId + "&redirect_uri=" + redirectURI + "&scope=openid&code_challenge_method=S256&code_challenge=" + code_challenge;
 }
 
 function log_out() {
