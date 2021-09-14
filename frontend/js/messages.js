@@ -9,7 +9,7 @@ function send_message(event) {
     let xhr = new XMLHttpRequest();
     xhr.open("POST", "api/send-message");
     xhr.setRequestHeader("Content-Type", "application/json");
-    // xhr.setRequestHeader("Authorization", access_token);
+    xhr.setRequestHeader("Authorization", access_token);
 
     xhr.onload = function () {
         console.log('Answer: ' + this.responseText);
@@ -25,7 +25,7 @@ function read_from_db() {
     let xhr = new XMLHttpRequest();
     xhr.open("GET", "api/read-from-db");
     xhr.setRequestHeader("Content-Type", "application/json");
-    // xhr.setRequestHeader("Authorization", access_token);
+    xhr.setRequestHeader("Authorization", access_token);
 
     xhr.onload = function () {
         console.log('Answer: ' + this.responseText);
@@ -41,7 +41,7 @@ function read_from_sqs() {
     let xhr = new XMLHttpRequest();
     xhr.open("GET", "api/read-from-sqs");
     xhr.setRequestHeader("Content-Type", "application/json");
-    // xhr.setRequestHeader("Authorization", access_token);
+    xhr.setRequestHeader("Authorization", access_token);
 
     xhr.onload = function () {
         let messages_list = document.getElementById("messages_list");
