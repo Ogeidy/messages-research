@@ -40,8 +40,6 @@ Resources:
     Type: AWS::Cognito::UserPool
     Properties:
       UserPoolName: !Sub ${CognitoDomain}-user-pool
-      UsernameAttributes:
-        - email
       UsernameConfiguration:
         CaseSensitive: false
       AutoVerifiedAttributes:
@@ -50,10 +48,6 @@ Resources:
         - Name: email
           AttributeDataType: String
           Mutable: false
-          Required: true
-        - Name: name
-          AttributeDataType: String
-          Mutable: true
           Required: true
 
   MessagesUserPoolClient:
@@ -64,11 +58,12 @@ Resources:
       AllowedOAuthFlowsUserPoolClient: true
       CallbackURLs:
         - https://d21j5of51ybpn6.cloudfront.net
+      LogoutURLs:
+        - https://d21j5of51ybpn6.cloudfront.net
       AllowedOAuthFlows:
         - code
         - implicit
       AllowedOAuthScopes:
-        - phone
         - email
         - openid
         - profile
