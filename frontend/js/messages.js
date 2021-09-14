@@ -1,6 +1,6 @@
 function send_message(event) {
     event.preventDefault();
-    let access_token = sessionStorage.getItem("access_token")
+    let id_token = sessionStorage.getItem("id_token")
     let formData = new FormData(send_form);
     let obj = {}
     formData.forEach((value, key) => obj[key] = value);
@@ -9,7 +9,7 @@ function send_message(event) {
     let xhr = new XMLHttpRequest();
     xhr.open("POST", "api/send-message");
     xhr.setRequestHeader("Content-Type", "application/json");
-    xhr.setRequestHeader("Authorization", access_token);
+    xhr.setRequestHeader("Authorization", id_token);
 
     xhr.onload = function () {
         console.log('Answer: ' + this.responseText);
@@ -21,11 +21,11 @@ function send_message(event) {
 document.getElementById('send_form').addEventListener('submit', send_message);
 
 function read_from_db() {
-    let access_token = sessionStorage.getItem("access_token");
+    let id_token = sessionStorage.getItem("id_token");
     let xhr = new XMLHttpRequest();
     xhr.open("GET", "api/read-from-db");
     xhr.setRequestHeader("Content-Type", "application/json");
-    xhr.setRequestHeader("Authorization", access_token);
+    xhr.setRequestHeader("Authorization", id_token);
 
     xhr.onload = function () {
         console.log('Answer: ' + this.responseText);
@@ -37,11 +37,11 @@ function read_from_db() {
 }
 
 function read_from_sqs() {
-    let access_token = sessionStorage.getItem("access_token")
+    let id_token = sessionStorage.getItem("id_token")
     let xhr = new XMLHttpRequest();
     xhr.open("GET", "api/read-from-sqs");
     xhr.setRequestHeader("Content-Type", "application/json");
-    xhr.setRequestHeader("Authorization", access_token);
+    xhr.setRequestHeader("Authorization", id_token);
 
     xhr.onload = function () {
         let messages_list = document.getElementById("messages_list");
