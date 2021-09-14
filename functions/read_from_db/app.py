@@ -18,12 +18,8 @@ def lambda_handler(event, context):
     resp = messages_table.scan()
 
     for msg in resp["Items"]:
-        print(f"{msg['message_id']=}, {msg['message']=}")
-        sqs_resp = messages_queue.send_message(
-            MessageGroupId="1",
-            MessageDeduplicationId=str(uuid.uuid4()),
-            MessageBody=(msg["message"]),
-        )
+        print(f"{msg['id']=}, {msg['message']=}")
+        sqs_resp = messages_queue.send_message(MessageBody=(msg["message"]))
         print(f"{sqs_resp=}")
 
     return {"statusCode": 200, "body": json.dumps({"status": "OK", "n_items": len(resp["Items"])})}
