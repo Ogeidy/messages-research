@@ -28,6 +28,11 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       StageName: api
+      Auth:
+        DefaultAuthorizer: MessagesApiCognitoAuthorizer
+        Authorizers:
+          MessagesApiCognitoAuthorizer:
+            UserPoolArn: !GetAtt MessagesUserPool.Arn
 
   # --- AWS Cognito ---
 
