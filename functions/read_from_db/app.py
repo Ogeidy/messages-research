@@ -15,6 +15,7 @@ messages_queue = sqs.get_queue_by_name(QueueName=queue_name)
 
 
 def lambda_handler(event, context):
+    print(f"{event=}")
     resp = messages_table.scan()
 
     for msg in resp["Items"]:
