@@ -1,0 +1,168 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Messages project backend
+
+Globals:
+  Function:
+    Timeout: 3
+    Handler: app.lambda_handler
+    Runtime: python3.8
+
+Parameters:
+  AuthStackName:
+    Type: String
+
+Resources:
+  # --- AWS API Gateway ---
+
+  MessagesApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: api
+      Auth:
+        DefaultAuthorizer: MessagesApiCognitoAuthorizer
+        Authorizers:
+          MessagesApiCognitoAuthorizer:
+            UserPoolArn:
+              Fn::ImportValue: !Sub "${AuthStackName}-user-pool-arn"
+
+  # --- AWS DynamoDB ---
+
+  MessagesTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: id
+        Type: String
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+  # --- AWS SQS ---
+
+  MessagesQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt MessagesDeadLetterQueue.Arn
+        maxReceiveCount: 5
+
+  MessagesDeadLetterQueue:
+    Type: AWS::SQS::Queue
+
+  # --- AWS Lambda ---
+
+  SendMessage:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/send_message
+      Environment:
+        Variables:
+          MESSAGES_TABLE_NAME: !Ref MessagesTable
+      Policies:
+        - Statement:
+            - Sid: PutMessagesTablePolicy
+              Effect: Allow
+              Action:
+                - dynamodb:PutItem
+              Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MessagesTable}"
+      Events:
+        SendMessageEvent:
+          Type: Api
+          Properties:
+            Path: /send-message
+            Method: POST
+            RestApiId: !Ref MessagesApi
+
+  ReadFromDb:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/read_from_db
+      Environment:
+        Variables:
+          MESSAGES_TABLE_NAME: !Ref MessagesTable
+          MESSAGES_QUEUE_NAME: !GetAtt MessagesQueue.QueueName
+      Policies:
+        - Statement:
+            - Sid: ScanMessagesTablePolicy
+              Effect: Allow
+              Action:
+                - dynamodb:Scan
+              Resource: !Sub "arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${MessagesTable}"
+            - Sid: SendSQSPolicy
+              Effect: Allow
+              Action:
+                - sqs:SendMessage
+                - sqs:GetQueueUrl
+              Resource: !Sub "arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${MessagesQueue.QueueName}"
+      Events:
+        ReadFromDbEvent:
+          Type: Api
+          Properties:
+            Path: /read-from-db
+            Method: GET
+            RestApiId: !Ref MessagesApi
+
+  ReadFromSqs:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/read_from_sqs
+      Environment:
+        Variables:
+          MESSAGES_QUEUE_NAME: !GetAtt MessagesQueue.QueueName
+      Policies:
+        - Statement:
+            - Sid: ReceiveDeleteSQSPolicy
+              Effect: Allow
+              Action:
+                - sqs:ReceiveMessage
+                - sqs:DeleteMessage
+                - sqs:GetQueueUrl
+              Resource: !Sub "arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:${MessagesQueue.QueueName}"
+      Events:
+        ReadFromSqsEvent:
+          Type: Api
+          Properties:
+            Path: /read-from-sqs
+            Method: GET
+            RestApiId: !Ref MessagesApi
+
+  GetIp:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/get_ip
+      Layers:
+        - !Ref RequestsLayer
+      Events:
+        GetIpEvent:
+          Type: Api
+          Properties:
+            Path: /get-ip
+            Method: GET
+            RestApiId: !Ref MessagesApi
+
+  # --- AWS Lambda Layer ---
+
+  RequestsLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: requests-layer
+      Description: Requests layer
+      ContentUri: ./layers/requests/
+      CompatibleRuntimes:
+        - python3.8
+      RetentionPolicy: Retain
+    Metadata:
+      BuildMethod: python3.8
+
+Outputs:
+  MessagesApiUrl:
+    Description: URL of MessagesApi endpoints
+    Value: !Sub "${MessagesApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}"
+    Export:
+      Name: !Sub "${AWS::StackName}-api-url"
+  MessagesApiId:
+    Description: Api id of MessagesApi
+    Value:
+      Ref: MessagesApi
