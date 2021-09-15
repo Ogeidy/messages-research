@@ -1,0 +1,126 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Messages project frontend
+
+Parameters:
+  FrontendBucketName:
+    Type: String
+    Default: messages-frontend-bucket
+  BackendStackName:
+    Type: String
+
+Resources:
+  # --- AWS S3 ---
+
+  MessagesS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: Private
+      BucketName: !Ref FrontendBucketName
+
+  MessagesCloudFrontOriginIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: "cloudfront origin identity for bucket"
+
+  MessagesS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref FrontendBucketName
+      PolicyDocument:
+        Statement:
+          - Action: ["s3:GetObject"]
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${MessagesCloudFrontOriginIdentity}"
+            Resource: !Sub "arn:aws:s3:::${FrontendBucketName}/*"
+
+  # --- AWS CloudFront ---
+
+  MessagesDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: Messages cloudfront distribution
+        Enabled: "true"
+        PriceClass: PriceClass_100
+        DefaultRootObject: index.html
+        Origins:
+          - Id: messages-frontend
+            DomainName: !GetAtt MessagesS3Bucket.DomainName
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${MessagesCloudFrontOriginIdentity}"
+          - Id: messages-backend
+            DomainName: 
+              Fn::ImportValue: !Sub "${BackendStackName}-api-url"
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols: ["TLSv1.2"]
+        DefaultCacheBehavior:
+          TargetOriginId: messages-frontend
+          AllowedMethods:
+            - GET
+            - HEAD
+          ForwardedValues:
+            QueryString: "false"
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: redirect-to-https
+        CacheBehaviors:
+          - TargetOriginId: messages-backend
+            AllowedMethods:
+              - HEAD
+              - DELETE
+              - POST
+              - GET
+              - OPTIONS
+              - PUT
+              - PATCH
+            ViewerProtocolPolicy: redirect-to-https
+            PathPattern: "/api/*"
+            CachePolicyId: !Ref MessagesApiCachePolicy
+            OriginRequestPolicyId: !Ref MessagesApiOriginRequestPolicy
+
+  MessagesApiCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Name: !Sub "${AWS::StackName}-api-cache-policy"
+        Comment: "Cache policy for api requests"
+        DefaultTTL: 0
+        MaxTTL: 1
+        MinTTL: 0
+        ParametersInCacheKeyAndForwardedToOrigin:
+          CookiesConfig:
+            CookieBehavior: none
+          EnableAcceptEncodingGzip: false
+          EnableAcceptEncodingBrotli: false
+          HeadersConfig:
+            HeaderBehavior: whitelist
+            Headers:
+              - Authorization
+          QueryStringsConfig:
+            QueryStringBehavior: all
+
+  MessagesApiOriginRequestPolicy:
+    Type: AWS::CloudFront::OriginRequestPolicy
+    Properties:
+      OriginRequestPolicyConfig:
+        Name: !Sub "${AWS::StackName}-api-origin-request-policy"
+        Comment: "Origin Request policy for filtering data forwarded to api requests"
+        CookiesConfig:
+          CookieBehavior: all
+        HeadersConfig:
+          HeaderBehavior: none
+        QueryStringsConfig:
+          QueryStringBehavior: all
+
+Outputs:
+  MessagesDistributionId:
+    Description: "Messages CloudFront distribuition id"
+    Value: !Ref MessagesDistribution
+  MessagesDistributionDomainName:
+    Description: "Messages CloudFront distribuition domain name"
+    Value: !GetAtt MessagesDistribution.DomainName
