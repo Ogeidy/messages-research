@@ -26,4 +26,4 @@ jobs:
       - name: Upload frontend
         run: |
           aws s3 sync --cache-control 'max-age=604800' frontend s3://messages-frontend-bucket/
-          # aws cloudfront create-invalidation --distribution-id  EV3P93HL3HZM8 --paths "/*"
+          aws cloudfront create-invalidation --distribution-id  E28MV6ERBVKA4C --paths "/*"
