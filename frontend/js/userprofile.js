@@ -4,9 +4,9 @@ let urlParams = new URLSearchParams(window.location.search);
 let tokens;
 let domain = "messages-auth";
 let region = "us-east-2";
-let appClientId = "78kvio8dpsnj6mblm820tpifld";
-let userPoolId = "us-east-2_Wv1JdHExs";
-let redirectURI = "https://d21j5of51ybpn6.cloudfront.net";
+let appClientId = "6m69gfa0sagjr83daffh01pmpr";
+let userPoolId = "us-east-2_b3PpCB1dP";
+let redirectURI = "https://d2fghpynnfycy8.cloudfront.net";
 
 
 async function log_in() {
