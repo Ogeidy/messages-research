@@ -31,7 +31,7 @@ jobs:
         run: >
           sam build
           -t ./auth/template.yaml
-          --parameter-overrides "ParameterKey=CognitoDomain,ParameterValue=messages-auth ParameterKey=FrontendUrl,ParameterValue=http://localhost"
+          --parameter-overrides "ParameterKey=CognitoDomain,ParameterValue=messages-auth ParameterKey=FrontendUrl,ParameterValue=https://d2fghpynnfycy8.cloudfront.net"
 
       - name: SAM Deploy
         run: >
@@ -41,4 +41,4 @@ jobs:
           --resolve-s3
           --stack-name messages-auth
           --capabilities CAPABILITY_IAM
-          --parameter-overrides "ParameterKey=CognitoDomain,ParameterValue=messages-auth ParameterKey=FrontendUrl,ParameterValue=http://localhost"
+          --parameter-overrides "ParameterKey=CognitoDomain,ParameterValue=messages-auth ParameterKey=FrontendUrl,ParameterValue=https://d2fghpynnfycy8.cloudfront.net"
