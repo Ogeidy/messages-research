@@ -2,11 +2,11 @@ let myHeaders = new Headers();
 myHeaders.set('Cache-Control', 'no-store');
 let urlParams = new URLSearchParams(window.location.search);
 let tokens;
-let domain = "messages-auth";
+let domain = "cm-auth-dev";
 let region = "us-east-2";
-let appClientId = "6m69gfa0sagjr83daffh01pmpr";
-let userPoolId = "us-east-2_b3PpCB1dP";
-let redirectURI = "https://d2fghpynnfycy8.cloudfront.net";
+let appClientId = "1rl8cmu9t6hmsibq0vuec18pja";
+let userPoolId = "us-east-2_6I3aMMoki";
+let redirectURI = "http://localhost";
 
 
 async function log_in() {
